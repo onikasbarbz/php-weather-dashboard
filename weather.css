@@ -1,88 +1,79 @@
- *{
+* {
     margin: 0;
     padding: 0;
-    font-family:'Courier New', Courier, monospace;
+    font-family: 'Courier New', Courier, monospace;
     box-sizing: border-box;
-
 }
-body{
+
+body {
     background-image: url("https://img.freepik.com/free-vector/sky-background-video-conferencing_23-2148639325.jpg?w=1060&t=st=1704351847~exp=1704352447~hmac=e65ea7487b79822267166744a244eecbe65f793e00f6072de4b796658e85a8df");
     background-size: cover;
 }
-.past{
-   background: #ebfffc;
-   padding: 10px;
-   border-radius: 20px;
-   text-decoration: none;
 
-}
-
-.container{
+.container {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    align-content: space-between;
     justify-content: space-between;
 }
 
-.card{
-    width:90%;
+.card {
+    width: 90%;
     max-width: 470px;
-    background: linear-gradient(125deg, #85ebff,#e798e5 );
+    background: linear-gradient(125deg, #85ebff, #e798e5);
     color: #fff;
-    margin:50px auto 0;
+    margin: 50px auto 0;
     border-radius: 20px;
     padding: 20px 25px;
-    text-align:center;
+    text-align: center;
 }
 
-.search{
-    width:100%;
-    display:flex;
+.search {
+    width: 100%;
+    display: flex;
     align-items: center;
-    justify-tracks: space-between;
+    justify-content: space-between;
 }
-.search button img {
-    transform: scale(1.8);
-    object-fit: contain;
-}
-.search input{
+
+.search input {
     border: 0;
     outline: 0;
     background: #ebfffc;
     padding: 10px 25px;
     height: 60px;
     border-radius: 30px;
-    flex:1;
+    flex: 1;
     margin-right: 16px;
     font-size: 18px;
 }
 
-.search button{
-    border:0;
-    outline:0;
+.search button {
+    border: 0;
+    outline: 0;
     background: #ebfffc;
-    border-radius:50%;
+    border-radius: 50%;
     width: 60px;
     height: 60px;
     cursor: pointer;
 }
 
-.search button img{
+.search button img {
     width: 16px;
+    transform: scale(1.8);
+    object-fit: contain;
 }
 
-.weather-icon{
-    width:170px;
+.weather-icon {
+    width: 170px;
 }
 
-.weather h1{
+.weather h1 {
     font-size: 80px;
     font-weight: 400;
     margin-top: 10px;
 }
 
-.details{
+.details {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -90,23 +81,32 @@ body{
     margin-top: 50px;
 }
 
-.col{
+.col {
+    display: flex;
     align-items: center;
     text-align: left;
 }
 
-.col img{
+.col img {
     width: 40px;
     margin-right: 10px;
 }
 
-.humidity, .wind{
+.humidity,
+.wind {
     font-size: 28px;
     margin-top: -6px;
 }
 
-.foot{
-    background: linear-gradient(125deg, #85ebff,#e798e5 );
+.past {
+    background: #ebfffc;
+    padding: 10px;
+    border-radius: 20px;
+    text-decoration: none;
+}
+
+.foot {
+    background: linear-gradient(125deg, #85ebff, #e798e5);
     text-align: center;
     color: white;
     padding: 15px;
