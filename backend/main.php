@@ -1,100 +1,75 @@
 <?php
-//including necessary files
+// include database and API helper files
 include("database.php");
 include("api.php");
-//Allow cross-origin requests and setting content type to JSON
+
+// allow cross-origin requests and set response type to JSON
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
-//setting database connection
-$connection = connect_database("localhost", "root", "", "weather");
 
-//checking if the 'city' parameter is set in the request
-if (isset($_GET["city"])) {
-    $city= $_GET["city"];
-$existingData = null;
-//get weather data for the specified city
-$allData = get_weather_data($connection, $city);
-if ($allData !== null) {  
-    // Check if $allData is not null before using count()
-    if (count($allData) == 0) {
-        $existingData = null;
-    } else {
-        //get the latest weather data
-        $lastIndex = count($allData) - 1;
-        $existingData = $allData[$lastIndex];
-    }
-} else {
-    $existingData = null;
+// cache refresh interval — 24 hours
+define('REFRESH_TIME', 24 * 60 * 60);
+
+// return error JSON and exit
+function send_error($message) {
+    echo json_encode(["error" => $message]);
+    exit;
 }
 
-//check if 'history' parameter is set in the request
+// format raw OpenWeatherMap API response into a flat array
+function format_weather($raw) {
+    return [
+        'coord'       => $raw['coord'],
+        'icon'        => $raw['weather'][0]['icon'],
+        'description' => $raw['weather'][0]['description'],
+        'main'        => $raw['weather'][0]['main'],
+        'temperature' => $raw['main']['temp'],
+        'Pressure'    => $raw['main']['pressure'],
+        'humidity'    => $raw['main']['humidity'],
+        'windSpeed'   => $raw['wind']['speed'],
+        'City'        => $raw['name'],
+        'date'        => $raw['dt'],
+    ];
+}
+
+// connect to database
+$connection = connect_database("localhost", "root", "", "weather");
+
+// require city parameter
+if (!isset($_GET["city"])) {
+    send_error("No city provided!");
+}
+
+$city = $_GET["city"];
+
+// fetch all stored records for this city
+$allData = get_weather_data($connection, $city);
+$existingData = (!empty($allData)) ? $allData[count($allData) - 1] : null;
+
+// if history flag is set, return all records and exit
 if (isset($_GET["history"])) {
-    //returning all weather data as JSON
     echo json_encode($allData);
     exit;
 }
-//setting refresh time to 24 hour
-$refreshTime = 24*60*60; // full day
-//checking if existing data needs to be refreshed
-if ($existingData) {
-    $dataTimeStamp = 0;
-    if (isset($existingData["date"])){
-        $dataTimeStamp = $existingData["date"];
-    }
-    $currentTime = time();
-    if ($currentTime - $dataTimeStamp > $refreshTime) {
 
-        $newData = fetch_currentWeather_data($city);
-        if ($newData) {
-                //formatting and return the new data as JSON 
-                insert_weather_data($connection,$newData);
-                $databaseFormat = ['coord' => $newData['coord'],
-                'icon'=>$newData['weather'][0]['icon'],
-                'description' => $newData['weather'][0]['description'],
-                'main'=>$newData['weather'][0]['main'],
-                'temperature' => $newData['main']['temp'],
-                'pressure' => $newData['main']['pressure'],
-                'humidity' => $newData['main']['humidity'],
-                'windspeed' => $newData['wind']['speed'],
-                'name' => $newData['name'],
-                'date' => $newData['dt']];
-                echo json_encode($databaseFormat);
-            
-        } else {
-            echo '{"error": "Data could not be fetched!"}';
-            exit;
-        }
-    } else {
-        //returning existing data as JSON
+// check if cached data exists and is still fresh
+if ($existingData) {
+    $dataAge = time() - ($existingData["date"] ?? 0);
+
+    if ($dataAge <= REFRESH_TIME) {
+        // return cached data
         echo json_encode($existingData);
         exit;
     }
-} else {
-    //fetching new data if no existing data is found
-    $newData = fetch_currentWeather_data($city);
-    if ($newData) {
-        //inserting new data into the database
-        insert_weather_data($connection,$newData);
-            //formatting and returning the new data as JSON
-            $databaseFormat = [
-                  'coord' => $newData['coord'],
-                'icon'=>$newData['weather'][0]['icon'],
-                'description' => $newData['weather'][0]['description'],
-                'main'=>$newData['weather'][0]['main'],
-                'temperature' => $newData['main']['temp'],
-                'pressure' => $newData['main']['pressure'],
-                'humidity' => $newData['main']['humidity'],
-                'windspeed' => $newData['wind']['speed'],
-            'name' => $newData['name'],
-            'date' => $newData['dt']];
-            echo json_encode($databaseFormat);
-
-    } else {
-        echo '{"error": "Data could not be fetched!"}';
-        exit;
-    }
 }
-} else {
-    //Return an error if 'city' parameter is not provided.
-    echo '{"error": "No city provided!"}';
-}?>
+
+// fetch fresh data from OpenWeatherMap
+$newData = fetch_currentWeather_data($city);
+
+if (!$newData) {
+    send_error("Data could not be fetched!");
+}
+
+insert_weather_data($connection, $newData);
+echo json_encode(format_weather($newData));
+?>
