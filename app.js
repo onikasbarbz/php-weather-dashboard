@@ -1,5 +1,5 @@
 // API endpoint — proxied through local PHP backend
-const apiUrl = "http://localhost/WEATHER-app/backend/main.php?city=";
+const apiUrl = "/WEATHER-app/backend/main.php?city=";
 
 // DOM elements
 const searchBox = document.querySelector(".search input");
@@ -17,36 +17,31 @@ const weatherIcons = {
 
 // fetch and display weather data for a given city
 async function checkWeather(city) {
-    const response = await fetch(apiUrl + city);
-    const data = await response.json();
+    try {
+        const response = await fetch(apiUrl + city);
+        const data = await response.json();
 
-    if (data.error) {
-        alert("No data found");
-        return;
+        if (data.error) {
+            alert("No data found");
+            return;
+        }
+
+        document.querySelector(".city").innerText = data.City;
+        document.querySelector(".temp").innerText = data.temperature + "°C";
+        document.querySelector(".weather-condition").innerText = data.description;
+        document.querySelector(".humidity").innerText = data.humidity + "%";
+        document.querySelector(".Wind").innerText = data.windSpeed + "km/h";
+        document.querySelector(".pressure").innerText = data.Pressure + "hPa";
+        document.querySelector(".time").innerText = new Date(data.date * 1000).toLocaleDateString("en-US", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "numeric",
+        });
+
+        weatherIcon.src = weatherIcons[data.main] ?? "";
+
+    } catch (error) {
+        alert("Something went wrong. Please try again.");
     }
-
-    document.querySelector(".city").innerText = data.City;
-    document.querySelector(".temp").innerText = data.temperature + "°C";
-    document.querySelector(".weather-condition").innerText = data.description;
-    document.querySelector(".humidity").innerText = data.humidity + "%";
-    document.querySelector(".Wind").innerText = data.windSpeed + "km/h";
-    document.querySelector(".pressure").innerText = data.Pressure + "Pa";
-    document.querySelector(".time").innerText = new Date(data.date * 1000).toLocaleDateString("en-US", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-    });
-
-    weatherIcon.src = weatherIcons[data.main] ?? "";
 }
-
-// event listeners
-searchBtn.addEventListener("click", () => checkWeather(searchBox.value));
-
-searchBox.addEventListener("keyup", (e) => {
-    if (e.code === "Enter") searchBtn.click();
-});
-
-// default city on load
-checkWeather("Berlin");
