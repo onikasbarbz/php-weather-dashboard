@@ -4,7 +4,7 @@
  * Handles fetching current weather from OpenWeatherMap API.
  */
 
-define('API_KEY', '7e5a8c646fc24d483fe02d2982677ed2');
+define('API_KEY', 'YOUR_API_KEY_HERE');
 define('API_BASE', 'https://api.openweathermap.org/data/2.5/weather?units=metric');
 
 /**
