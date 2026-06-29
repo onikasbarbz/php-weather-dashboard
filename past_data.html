@@ -10,9 +10,7 @@
     <header>
       <h1 align="center" style="color:white">Weather Dashboard</h1>
     </header>
-
     <a href="index.html" class="back-button">back</a>
-
     <!--7-day weather history view-->
     <div class="modal" id="modal">
       <div class="modal-content">
@@ -28,11 +26,9 @@
         <ul id="weatherList"></ul>
       </div>
     </div>
-
     <footer class="foot">
       <p>Copyright &copy; Luniva Shrestha</p>
     </footer>
-
     <script>
       const searchBox = document.querySelector(".search input");
       const searchBtn = document.querySelector(".search button");
@@ -43,48 +39,53 @@
         const historyUl = document.getElementById("weatherList");
         let data;
 
-        if (navigator.onLine) {
-          const response = await fetch(`http://localhost/WEATHER-app/backend/main.php?city=${city}&history=true`);
-          data = await response.json();
-          localStorage.setItem(city, JSON.stringify(data));
-        } else {
-          data = JSON.parse(localStorage.getItem(city));
-        }
+        try {
+          if (navigator.onLine) {
+            const response = await fetch(`/WEATHER-app/backend/main.php?city=${city}&history=true`);
+            data = await response.json();
+            localStorage.setItem(city, JSON.stringify(data));
+          } else {
+            data = JSON.parse(localStorage.getItem(city));
+          }
 
-        weatherTitle.innerText = `Weather for the Past 7 Days of ${city}`;
-        historyUl.innerHTML = "";
+          if (!data || data.length === 0) {
+            historyUl.innerHTML = "<li>No history found for this city.</li>";
+            return;
+          }
 
-        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-        const startOfToday = new Date().setHours(0, 0, 0, 0);
+          weatherTitle.innerText = `Weather for the Past 7 Days of ${city}`;
+          historyUl.innerHTML = "";
 
-        data.forEach((entry) => {
-          const entryTime = entry.date * 1000;
+          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
-          // skip entries outside the 7-day window
-          if (entryTime < sevenDaysAgo || entryTime >= startOfToday) return;
-
-          const formattedDate = new Date(entryTime).toLocaleDateString("en-US", {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-            hour: "numeric",
+          data.forEach((entry) => {
+            const entryTime = entry.date * 1000;
+            // skip entries outside the 7-day window
+            if (entryTime < sevenDaysAgo) return;
+            const formattedDate = new Date(entryTime).toLocaleDateString("en-US", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              hour: "numeric",
+            });
+            historyUl.innerHTML += `
+              <li>
+                <p>${formattedDate}</p>
+                <img src="https://openweathermap.org/img/wn/${entry.icon}@4x.png">
+                <p>Temperature: ${entry.temperature}&deg;C</p>
+                <p>Pressure: ${entry.Pressure} hPa</p>
+                <p>Wind: ${entry.windSpeed} km/hr</p>
+                <p>Humidity: ${entry.humidity}%</p>
+              </li>`;
           });
 
-          historyUl.innerHTML += `
-            <li>
-              <p>${formattedDate}</p>
-              <img src="https://openweathermap.org/img/wn/${entry.icon}@4x.png">
-              <p>Temperature: ${entry.temperature}&deg;C</p>
-              <p>Pressure: ${entry.Pressure} Pa</p>
-              <p>Wind: ${entry.windSpeed} km/hr</p>
-              <p>Humidity: ${entry.humidity}%</p>
-            </li>`;
-        });
+        } catch (error) {
+          historyUl.innerHTML = "<li>Something went wrong. Please try again.</li>";
+        }
       }
 
       // event listeners
       searchBtn.addEventListener("click", () => openModal(searchBox.value));
-
       searchBox.addEventListener("keyup", (e) => {
         if (e.code === "Enter") searchBtn.click();
       });
