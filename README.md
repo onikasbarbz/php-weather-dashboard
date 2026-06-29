@@ -4,11 +4,11 @@ A full-stack weather dashboard that shows real-time weather conditions and a 7-d
 
 ## Features
 
-- 🔍 Search any city to get current weather
-- 🌡️ Displays temperature, humidity, wind speed, and pressure
-- 📅 Historical weather view for the past 7 days
-- 💾 Offline fallback using localStorage — last fetched data persists without internet
-- 🕐 Live local time display for the searched city
+- Search any city to get current weather
+- Displays temperature, humidity, wind speed, and pressure
+- Historical weather view for the past 7 days
+- Offline fallback using localStorage — last fetched data persists without internet
+- Live local time display for the searched city
 
 ## Tech Stack
 
