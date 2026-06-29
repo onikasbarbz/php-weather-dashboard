@@ -1,22 +1,30 @@
 <?php
-// include database and API helper files
+
+/**
+ * Entry point for all weather data requests.
+ * 
+ * Accepts: ?city=CityName
+ * Optional: ?history=true (returns all stored records for that city)
+ * 
+ * Flow: check DB cache → return if fresh → otherwise fetch from API → save → return
+ */
+
 include("database.php");
 include("api.php");
 
-// allow cross-origin requests and set response type to JSON
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-// cache refresh interval — 24 hours
+// how long before cached data is considered stale
 define('REFRESH_TIME', 24 * 60 * 60);
 
-// return error JSON and exit
+// helper to send an error response and stop execution
 function send_error($message) {
     echo json_encode(["error" => $message]);
     exit;
 }
 
-// format raw OpenWeatherMap API response into a flat array
+// flatten the nested API response into what the frontend expects
 function format_weather($raw) {
     return [
         'coord'       => $raw['coord'],
@@ -32,38 +40,34 @@ function format_weather($raw) {
     ];
 }
 
-// connect to database
 $connection = connect_database("localhost", "root", "", "weather");
 
-// require city parameter
 if (!isset($_GET["city"])) {
     send_error("No city provided!");
 }
 
 $city = $_GET["city"];
 
-// fetch all stored records for this city
+// grab everything we have stored for this city
 $allData = get_weather_data($connection, $city);
-$existingData = (!empty($allData)) ? $allData[count($allData) - 1] : null;
+$existingData = !empty($allData) ? $allData[count($allData) - 1] : null;
 
-// if history flag is set, return all records and exit
+// history mode — return all records without any cache logic
 if (isset($_GET["history"])) {
     echo json_encode($allData);
     exit;
 }
 
-// check if cached data exists and is still fresh
+// if we have data and it's less than 24hrs old, return it as-is
 if ($existingData) {
     $dataAge = time() - ($existingData["date"] ?? 0);
-
     if ($dataAge <= REFRESH_TIME) {
-        // return cached data
         echo json_encode($existingData);
         exit;
     }
 }
 
-// fetch fresh data from OpenWeatherMap
+// cache is stale or empty — hit the API for fresh data
 $newData = fetch_currentWeather_data($city);
 
 if (!$newData) {
