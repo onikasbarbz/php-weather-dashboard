@@ -3,109 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>weather</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Weather History</title>
+    <link rel="stylesheet" href="weather.css" />
   </head>
   <body>
     <header>
-      <h1 align="center" style="color:white">Weather app viewer</h1>
-
+      <h1 align="center" style="color:white">Weather Dashboard</h1>
     </header>
 
-<!--Modal for displaying weather history-->
-  <a href="luniva_shrestha_2408028.html" class="back-button">back</a>
+    <a href="index.html" class="back-button">back</a>
+
+    <!--7-day weather history view-->
     <div class="modal" id="modal">
-      
       <div class="modal-content">
-        <h2 align="center" style="color: white;" class="weather-city">weather for the Past 7 Days</h2>
-        <div align="center"><div class="search">
-          <input type="text" placeholder="enter city name"
-          spellcheck="false">
-          <button><img src="https://th.bing.com/th/id/OIP.eSd9_97qH0SzO84bg8fpfAHaHa?rs=1&pid=ImgDetMain" class="search-icon"> </button>
-      </div>
+        <h2 align="center" style="color: white;" class="weather-city">Weather for the Past 7 Days</h2>
+        <div align="center">
+          <div class="search">
+            <input type="text" placeholder="enter city name" spellcheck="false">
+            <button>
+              <img src="https://th.bing.com/th/id/OIP.eSd9_97qH0SzO84bg8fpfAHaHa?rs=1&pid=ImgDetMain" class="search-icon">
+            </button>
+          </div>
         </div>
         <ul id="weatherList"></ul>
       </div>
-      
     </div>
 
-   <script>
-    const searchBox= document.querySelector(".search input");
-    const searchBtn= document.querySelector(".search button");
-    const weatherData = document.querySelector('.weather-city');
-    //function to open weather history modal
-      async function openModal(city = "Berlin") {
-        //get the weather history list element
-        let historyUl = document.getElementById("weatherList");
-
-        let data;
-
-        if(navigator.onLine){
-          //fetch weather data from the backend
-          let response = await fetch(`http://localhost/WEATHER-app/backend/main.php?city=${city}&history=true`
-           );
-           //parse the JSON response
-          data = await response.json();
-
-          const weatherData = JSON.stringify(data)
-
-          localStorage.setItem(city, weatherData)
-        }else{ 
-          const weatherData = localStorage.getItem(city)
-
-          const retrivedData = JSON.parse(weatherData)
-
-          data = retrivedData
-        }
-        console.log(data);
-
-        weatherData.innerText = `weather for the Past 7 Days of ${city}`
-        //clear the existing content in the weather history list
-        historyUl.innerHTML = "";
-        //loop through each weayther data entry
-        data.map((weatherData) => {
-          // if the date is older than 7 days don't show
-          if ((weatherData.date * 1000) < Date.now() - (7 * 60 * 60 * 24 * 1000)||weatherData.date*1000>=new Date().setHours(0, 0, 0, 0)){
-          // skin displaying old data
-            return;
-          }
-
-          let formattedDate = new Date(weatherData.date * 1000).toLocaleDateString(
-            "en-US",
-            {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              hour: "numeric",
-            }
-          );
-          //append the weather data to the history
-          historyUl.innerHTML += `<li >
-          <p>${formattedDate}</p>
-          <img src='https://openweathermap.org/img/wn/${weatherData.icon}@4x.png'>
-          <p>Temperature:${weatherData.temperature}&deg;C</p>
-          <p>Pressure:${weatherData.Pressure} Pa</font></p>
-          <p>Wind:${weatherData.windSpeed} km/hr</p>
-          <p>Humidity:${weatherData.humidity} %</p></li>`;
-        });
-      }
-      
-  searchBtn.addEventListener("click", function (){
-    openModal(searchBox.value);
-  })
-
-// searching city when enter key is clicked
-  searchBox.addEventListener("keyup", function (e) {
-    if (e.code === "Enter") {
-      searchBtn.click();
-    }
-  });
-      //call the function to open weather history modal
-      openModal("Berlin");
-    </script>
     <footer class="foot">
       <p>Copyright &copy; Luniva Shrestha</p>
-      <p>Student ID:2408028</p>
-    </footer> 
+    </footer>
+
+    <script>
+      const searchBox = document.querySelector(".search input");
+      const searchBtn = document.querySelector(".search button");
+      const weatherTitle = document.querySelector(".weather-city");
+
+      // fetch 7-day weather history, with localStorage fallback for offline use
+      async function openModal(city = "Berlin") {
+        const historyUl = document.getElementById("weatherList");
+        let data;
+
+        if (navigator.onLine) {
+          const response = await fetch(`http://localhost/WEATHER-app/backend/main.php?city=${city}&history=true`);
+          data = await response.json();
+          localStorage.setItem(city, JSON.stringify(data));
+        } else {
+          data = JSON.parse(localStorage.getItem(city));
+        }
+
+        weatherTitle.innerText = `Weather for the Past 7 Days of ${city}`;
+        historyUl.innerHTML = "";
+
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const startOfToday = new Date().setHours(0, 0, 0, 0);
+
+        data.forEach((entry) => {
+          const entryTime = entry.date * 1000;
+
+          // skip entries outside the 7-day window
+          if (entryTime < sevenDaysAgo || entryTime >= startOfToday) return;
+
+          const formattedDate = new Date(entryTime).toLocaleDateString("en-US", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "numeric",
+          });
+
+          historyUl.innerHTML += `
+            <li>
+              <p>${formattedDate}</p>
+              <img src="https://openweathermap.org/img/wn/${entry.icon}@4x.png">
+              <p>Temperature: ${entry.temperature}&deg;C</p>
+              <p>Pressure: ${entry.Pressure} Pa</p>
+              <p>Wind: ${entry.windSpeed} km/hr</p>
+              <p>Humidity: ${entry.humidity}%</p>
+            </li>`;
+        });
+      }
+
+      // event listeners
+      searchBtn.addEventListener("click", () => openModal(searchBox.value));
+
+      searchBox.addEventListener("keyup", (e) => {
+        if (e.code === "Enter") searchBtn.click();
+      });
+
+      // default city on load
+      openModal("Berlin");
+    </script>
   </body>
 </html>
